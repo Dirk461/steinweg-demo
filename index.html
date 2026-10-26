@@ -138,17 +138,10 @@ const LOCATIONS = [
   { id:'ams', name:'Amsterdam', level:'Site', parent:'nl' },
   { id:'ams-h7', name:'Hal 7', level:'Hal / positie', parent:'ams' },
   { id:'ams-h5', name:'Hal 5', level:'Hal / positie', parent:'ams' },
+  { id:'ams-ut', name:'Utilities', level:'Hal / positie', parent:'ams' },
   { id:'bb', name:'Big bag installatie', level:'Lijn / entiteit', parent:'ams-h7', status:'online', type:'Big bag vulstation' },
   { id:'jb', name:'Jute bag filler', level:'Lijn / entiteit', parent:'ams-h5', status:'gepland', type:'Jutezakvuller' },
-  { id:'ams-h3', name:'Hal 3', level:'Hal / positie', parent:'ams' },
-  { id:'ams-h8', name:'Hal 8', level:'Hal / positie', parent:'ams' },
-  { id:'silo7', name:'Silo-installatie', level:'Lijn / entiteit', parent:'ams-h7', status:'gepland', type:'Siloset met redlers' },
-  { id:'sort5', name:'Sorteerlijnen 1-4', level:'Lijn / entiteit', parent:'ams-h5', status:'gepland', type:'Sorteerlijn' },
-  { id:'zeef3', name:'Zeefinstallatie', level:'Lijn / entiteit', parent:'ams-h3', status:'gepland', type:'Zeef- en reinigingslijn' },
-  { id:'pal8', name:'Palletiseerlijn', level:'Lijn / entiteit', parent:'ams-h8', status:'gepland', type:'Palletiseerder' },
-  { id:'rtm', name:'Rotterdam', level:'Site', parent:'nl' },
-  { id:'rtm-b', name:'Hal B', level:'Hal / positie', parent:'rtm' },
-  { id:'rtm-l1', name:'Afvullijn 1', level:'Lijn / entiteit', parent:'rtm-b', status:'gepland', type:'Afvullijn' },
+  { id:'cool', name:'Koelunit', level:'Lijn / entiteit', parent:'ams-ut', status:'gepland', type:'Koelinstallatie' },
 ];
 
 const ROLES = {
@@ -173,10 +166,10 @@ const CAN = {
 
 // Orders zoals ze uit ERP General komen (fictief)
 const GENERAL = {
-  'STW-26-04812': { customer:'Noordkaap Cacao B.V.', product:'CB-GES', productName:'Cacaobonen geschoond', lot:'GH-2210-07', qty:12, weight:1150 },
-  'STW-26-04815': { customer:'Delta Cocoa Trading', product:'CB-ONG', productName:'Cacaobonen ongeschoond', lot:'IC-2210-11', qty:8, weight:1000 },
-  'STW-26-04820': { customer:'Amstel Chocolate Works', product:'CB-GES', productName:'Cacaobonen geschoond', lot:'GH-2210-09', qty:20, weight:1200 },
-  'STW-26-04822': { customer:'Havenstad Foods', product:'CB-GES', productName:'Cacaobonen geschoond', lot:'GH-2210-12', qty:6, weight:900 },
+  'ORD-10012': { customer:'Verhoef Handel B.V.', product:'PRD-A', productName:'Product A', lot:'LOT-0007', qty:12, weight:1150 },
+  'ORD-10015': { customer:'Kestrel Commodities', product:'PRD-B', productName:'Product B', lot:'LOT-0011', qty:8, weight:1000 },
+  'ORD-10020': { customer:'Brightwater Foods', product:'PRD-A', productName:'Product A', lot:'LOT-0009', qty:20, weight:1200 },
+  'ORD-10022': { customer:'Lindholm & Co', product:'PRD-A', productName:'Product A', lot:'LOT-0012', qty:6, weight:900 },
 };
 const SILOS = ['Silo 1','Silo 2','Silo 3','Silo 4','Silo 5','Silo 6'];
 const LIMITS = { min:500, max:1250 };
@@ -184,9 +177,9 @@ const LIMITS = { min:500, max:1250 };
 const START = () => ({
   recipes: [
     { id:'algemeen', client:'Algemeen recept', general:true, weight:1000, tol:5, sticker:['{KLANT}','ORDER {ORDER}','LOT {LOT}','',''] },
-    { id:'noordkaap', client:'Noordkaap Cacao B.V.', weight:1150, tol:5, sticker:['NOORDKAAP CACAO','REF 4500123','MARK NKC-AMS','Dest. Hamburg',''] },
-    { id:'delta', client:'Delta Cocoa Trading', weight:1000, tol:4, sticker:['DELTA COCOA','CONTRACT DCT-889','MARK DC/26','Origin: Ivory Coast',''] },
-    { id:'amstel', client:'Amstel Chocolate Works', weight:1200, tol:5, sticker:['AMSTEL CHOCOLATE','PO 77812','MARK ACW','Batch per order',''] },
+    { id:'noordkaap', client:'Verhoef Handel B.V.', weight:1150, tol:5, sticker:['VERHOEF HANDEL','REF 000123','MARK VH-01','BESTEMMING X',''] },
+    { id:'delta', client:'Kestrel Commodities', weight:1000, tol:4, sticker:['KESTREL','CONTRACT K-001','MARK KC-02','HERKOMST N.V.T.',''] },
+    { id:'amstel', client:'Brightwater Foods', weight:1200, tol:5, sticker:['BRIGHTWATER','PO 000456','MARK BW-03','Batch per order',''] },
   ],
   jobs: [],
   users: [
@@ -221,18 +214,18 @@ function seed(){
       createdBy:'J. Jansen', created:now(-minsAgo), status, ...extra };
     DB.jobs.push(j); return j;
   };
-  const done = mk('STW-26-04815','delta','Silo 2','Gereed',300);
+  const done = mk('ORD-10015','delta','Silo 2','Gereed',300);
   done.report = makeReport(done, 'OP-022', now(-280), true);
   done.status = 'Gereed';
-  mk('STW-26-04822','algemeen','Silo 4','Afgekeurd',150,{ reason:'Silo 4 is buiten bedrijf voor onderhoud (foutcode E-SILO-04)' });
-  mk('STW-26-04820','amstel','Silo 3','Ontvangen',25);
-  log('J. Jansen','Opdracht verstuurd','STW-26-04815 naar Big bag installatie', -300);
-  log('Machine','Rapport ontvangen','STW-26-04815, 8 big bags, COMPLETE', -210);
-  log('J. Jansen','Opdracht verstuurd','STW-26-04822 naar Big bag installatie', -150);
-  log('Machine','Opdracht afgekeurd','STW-26-04822: Silo 4 buiten bedrijf', -149);
+  mk('ORD-10022','algemeen','Silo 4','Afgekeurd',150,{ reason:'Silo 4 is buiten bedrijf voor onderhoud (foutcode E-SILO-04)' });
+  mk('ORD-10020','amstel','Silo 3','Ontvangen',25);
+  log('J. Jansen','Opdracht verstuurd','ORD-10015 naar Big bag installatie', -300);
+  log('Machine','Rapport ontvangen','ORD-10015, 8 big bags, COMPLETE', -210);
+  log('J. Jansen','Opdracht verstuurd','ORD-10022 naar Big bag installatie', -150);
+  log('Machine','Opdracht afgekeurd','ORD-10022: Silo 4 buiten bedrijf', -149);
   log('M. Bakker','Gebruiker toegevoegd','OP-022 als Machine operator, Big bag installatie', -90);
-  log('J. Jansen','Klantrecept gewijzigd','Amstel Chocolate Works: stickerregel 2', -40);
-  log('J. Jansen','Opdracht verstuurd','STW-26-04820 naar Big bag installatie', -25);
+  log('J. Jansen','Klantrecept gewijzigd','Brightwater Foods: stickerregel 2', -40);
+  log('J. Jansen','Opdracht verstuurd','ORD-10020 naar Big bag installatie', -25);
 }
 
 function fill(s,g,order){ return s.replace('{KLANT}',g.customer.toUpperCase()).replace('{ORDER}',order).replace('{LOT}',g.lot); }
@@ -401,13 +394,13 @@ function vDashboard(){
 function vNew(){
   const rec = DB.recipes;
   return `<h1>Nieuwe opdracht</h1><p class="sub">Vul het ordernummer in zoals het in ERP General staat. De ordergegevens worden automatisch ingevuld.</p>
-  <div class="note">Demo: probeer ordernummer <b class="mono">STW-26-04812</b> (bestaande klant met recept) of <b class="mono">STW-26-04822</b> (nieuwe klant, algemeen recept).</div>
+  <div class="note">Demo: probeer ordernummer <b class="mono">ORD-10012</b> (bestaande klant met recept) of <b class="mono">ORD-10022</b> (nieuwe klant, algemeen recept).</div>
   <div class="grid g2">
   <div>
     <div class="card"><h2>1. Lijn en order</h2>
       <div class="field"><label>Lijn</label><select id="fLine"><option value="bb">Big bag installatie (Amsterdam, Hal 7)</option></select></div>
       <div class="field"><label>Ordernummer (ERP General)</label>
-        <div class="row"><input id="fOrder" placeholder="STW-26-04812" style="flex:1"><button class="btn sec" id="fFetch">Ophalen</button></div>
+        <div class="row"><input id="fOrder" placeholder="ORD-10012" style="flex:1"><button class="btn sec" id="fFetch">Ophalen</button></div>
         <div class="err" id="eOrder"></div></div>
       <div class="grid g2">
         <div class="field"><label>Klant</label><input id="fCust" readonly></div>
@@ -659,8 +652,8 @@ function vLocations(){
 function vUsers(){
   const isSite = ROLE==='siteadmin';
   const roles = isSite ? ['Site operator','Machine operator','Lezer'] : ['Site admin','Site operator','Machine operator','Lezer'];
-  const scopes = isSite ? ['Site Amsterdam','Hal 7','Big bag installatie, Hal 7','Hal 5'] : ['Site Amsterdam','Site Rotterdam','Hal 7','Big bag installatie, Hal 7','Nederland'];
-  const list = isSite ? DB.users.filter(u=>u.role!=='Platform admin' && !/Rotterdam/.test(u.scope)) : DB.users;
+  const scopes = isSite ? ['Site Amsterdam','Hal 7','Hal 5','Utilities','Big bag installatie, Hal 7'] : ['Site Amsterdam','Hal 7','Hal 5','Utilities','Big bag installatie, Hal 7','Nederland'];
+  const list = isSite ? DB.users.filter(u=>u.role!=='Platform admin') : DB.users;
   return `<h1>Gebruikers</h1><p class="sub">${isSite?'Als site admin voegt u site operators, machine operators en lezers toe binnen Site Amsterdam.':'Als Platform admin wijst u site admins aan en beheert u alle gebruikers.'}</p>
   <div class="grid g2"><div class="card" style="padding:0"><table><tr><th>Naam</th><th>Rol</th><th>Scope</th></tr>
     ${list.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.role)}</td><td>${esc(u.scope)}</td></tr>`).join('')}</table></div>
