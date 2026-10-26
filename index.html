@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Steinweg Machineplatform (demo)</title>
+<style>
+:root{
+  --navy:#1F3864; --blue:#0070C0; --blue-2:#2E74B5; --tint:#DEEAF6; --bg:#F4F6F9; --card:#FFFFFF;
+  --line:#D9DEE5; --text:#1A1A1A; --muted:#5F6B7A; --ok:#2E7D32; --ok-bg:#E6F4EA; --warn:#B26A00; --warn-bg:#FFF4E0;
+  --err:#C62828; --err-bg:#FDECEA; --grey-bg:#EEF0F3;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+button,input,select,textarea{font:inherit}
+a{color:var(--blue)}
+.demo-bar{background:#FFF8D6;border-bottom:1px solid #E8D98A;padding:6px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}
+.demo-bar b{color:#6B5800}
+.demo-bar select{width:auto;padding:3px 6px;border:1px solid #C9B65A;border-radius:4px;background:#fff}
+.top{background:var(--navy);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;height:52px}
+.top .brand{font-weight:bold;font-size:16px;letter-spacing:.2px}
+.top .brand span{font-weight:normal;opacity:.75;font-size:13px;margin-left:8px}
+.top .spacer{flex:1}
+.top .user{font-size:13px;text-align:right;line-height:1.25}
+.top .user small{opacity:.75}
+.wrap{display:flex;min-height:calc(100vh - 86px)}
+nav{width:220px;background:#fff;border-right:1px solid var(--line);padding:12px 0;flex-shrink:0}
+nav button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:10px 18px;cursor:pointer;color:var(--text)}
+nav button:hover{background:var(--grey-bg)}
+nav button.active{background:var(--tint);color:var(--navy);font-weight:bold;border-left:3px solid var(--blue);padding-left:15px}
+nav .sec{font-size:11px;text-transform:uppercase;color:var(--muted);padding:14px 18px 4px;letter-spacing:.5px}
+main{flex:1;padding:22px 26px;max-width:1200px}
+h1{font-size:21px;margin:0 0 4px;color:var(--navy)}
+.sub{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 12px;color:var(--navy)}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.kpi .v{font-size:26px;font-weight:bold;color:var(--navy)}
+.kpi .l{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse}
+th{background:var(--navy);color:#fff;text-align:left;font-weight:bold;padding:8px 10px;font-size:13px}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#F7FAFD}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;font-weight:bold;white-space:nowrap}
+.b-concept{background:var(--grey-bg);color:#444}
+.b-verstuurd{background:var(--tint);color:var(--navy)}
+.b-ontvangen{background:var(--warn-bg);color:var(--warn)}
+.b-actief{background:#E3F2FD;color:#0D47A1}
+.b-gereed{background:var(--ok-bg);color:var(--ok)}
+.b-afgekeurd{background:var(--err-bg);color:var(--err)}
+.b-geannuleerd{background:var(--grey-bg);color:#777}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.dot.on{background:#2E7D32}.dot.off{background:#9AA3AE}.dot.warn{background:#E0A100}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:bold}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid #C5CCD6;border-radius:5px;background:#fff}
+input[readonly]{background:#F1F3F6;color:#333}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--tint);border-color:var(--blue)}
+.field{margin-bottom:12px}
+.err{color:var(--err);font-size:12px;margin-top:4px}
+.btn{border:1px solid var(--blue);background:var(--blue);color:#fff;padding:8px 16px;border-radius:5px;cursor:pointer;font-weight:bold}
+.btn:hover{filter:brightness(.95)}
+.btn.sec{background:#fff;color:var(--blue)}
+.btn.danger{background:#fff;color:var(--err);border-color:var(--err)}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.right{margin-left:auto}
+.note{background:var(--tint);border-left:3px solid var(--blue);padding:10px 12px;border-radius:0 5px 5px 0;font-size:13px;margin-bottom:14px}
+.locked{background:var(--grey-bg);border:1px dashed #B8C0CB;padding:28px;text-align:center;color:var(--muted);border-radius:8px}
+pre.csv{background:#F4F5F7;border:1px solid var(--line);padding:10px;border-radius:5px;font-size:11.5px;overflow:auto;white-space:pre;margin:0}
+.sticker{border:2px solid #222;border-radius:4px;padding:10px 12px;font-family:"Courier New",monospace;font-size:13px;background:#fff;width:260px;line-height:1.5}
+.tree ul{list-style:none;margin:0;padding-left:20px;border-left:1px dashed #C5CCD6}
+.tree>ul{border-left:0;padding-left:0}
+.tree li{padding:5px 0}
+.tree .lvl{font-size:11px;color:var(--muted);margin-left:6px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--navy);color:#fff;padding:12px 16px;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:360px;z-index:50;transition:opacity .3s}
+.muted{color:var(--muted)}
+.mono{font-family:Consolas,monospace;font-size:12.5px}
+/* HMI */
+.hmi{background:#2B3138;border-radius:10px;padding:14px;color:#E8ECF0;max-width:900px;box-shadow:inset 0 0 0 6px #1C2025}
+.hmi .bar{display:flex;justify-content:space-between;font-size:13px;color:#AAB4BF;border-bottom:1px solid #47505A;padding-bottom:8px;margin-bottom:12px}
+.hmi .panel{background:#363D45;border-radius:6px;padding:12px;margin-bottom:12px}
+.hmi h3{margin:0 0 10px;font-size:14px;color:#fff}
+.hmi .job{border:2px solid #4A535D;border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer}
+.hmi .job.sel{border-color:#4FC3F7;background:#2F4656}
+.hmi .big{font-size:30px;font-weight:bold;color:#fff}
+.hmi .lbl{font-size:12px;color:#AAB4BF}
+.hmi .prog{height:14px;background:#22272D;border-radius:7px;overflow:hidden;margin-top:8px}
+.hmi .prog div{height:100%;background:#4CAF50;width:0;transition:width .4s}
+.hmi .hbtn{border:0;border-radius:6px;padding:14px 22px;font-weight:bold;font-size:15px;cursor:pointer}
+.hmi .start{background:#2E7D32;color:#fff}.hmi .stop{background:#C62828;color:#fff}.hmi .neutral{background:#56606B;color:#fff}
+.hmi .hbtn:disabled{opacity:.35;cursor:not-allowed}
+.hmi table td{border-bottom:1px solid #47505A;color:#E8ECF0;padding:5px 8px}
+.hmi table th{background:#1F3864}
+@media (max-width:900px){.wrap{flex-direction:column}nav{width:100%;display:flex;overflow-x:auto;padding:0;border-right:0;border-bottom:1px solid var(--line)}nav .sec{display:none}nav button{width:auto;white-space:nowrap;padding:10px 14px}nav button.active{border-left:0;border-bottom:3px solid var(--blue);padding-left:14px}.top .user{display:none}.g4,.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:1fr}main{padding:16px}}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <b>Demo-prototype</b><span>Steinweg Machineplatform, opgesteld door Synergo ter illustratie. Alle gegevens zijn fictief.</span>
+  <span class="right">Bekijk als:</span>
+  <select id="roleSel" aria-label="Demorol kiezen"></select>
+  <button class="btn sm sec" id="resetBtn" title="Demo-gegevens terugzetten">Demo herstarten</button>
+</div>
+
+<div class="top">
+  <div class="brand">Steinweg Machineplatform <span id="scopeLabel"></span></div>
+  <div class="spacer"></div>
+  <div class="user" id="userBox"></div>
+</div>
+
+<div class="wrap">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+
+<script>
+// =====================================================================
+// DEMO-GEGEVENS (fictief)
+// =====================================================================
+const LOCATIONS = [
+  { id:'nl', name:'Nederland', level:'Land', parent:null },
+  { id:'ams', name:'Amsterdam', level:'Site', parent:'nl' },
+  { id:'ams-h7', name:'Hal 7', level:'Hal / positie', parent:'ams' },
+  { id:'ams-h5', name:'Hal 5', level:'Hal / positie', parent:'ams' },
+  { id:'bb', name:'Big bag installatie', level:'Lijn / entiteit', parent:'ams-h7', status:'online', type:'Big bag vulstation' },
+  { id:'jb', name:'Jute bag filler', level:'Lijn / entiteit', parent:'ams-h5', status:'gepland', type:'Jutezakvuller' },
+  { id:'rtm', name:'Rotterdam', level:'Site', parent:'nl' },
+  { id:'rtm-b', name:'Hal B', level:'Hal / positie', parent:'rtm' },
+  { id:'rtm-l1', name:'Afvullijn 1', level:'Lijn / entiteit', parent:'rtm-b', status:'gepland', type:'Afvullijn' },
+];
+
+const ROLES = {
+  platform: { label:'Platform admin', user:'R. de Vries (Steinweg IT)', scope:'nl', scopeName:'Alle locaties' },
+  siteadmin:{ label:'Site admin', user:'M. Bakker (teamleider)', scope:'ams', scopeName:'Site Amsterdam' },
+  operator: { label:'Site operator', user:'J. Jansen', scope:'bb', scopeName:'Big bag installatie, Hal 7' },
+  lezer:    { label:'Lezer', user:'S. de Boer (planning)', scope:'nl', scopeName:'Nederland' },
+  machine:  { label:'Machine operator', user:'OP-017 (HMI)', scope:'bb', scopeName:'HMI big bag installatie' },
+};
+
+// Rechtenmatrix uit STA001-FO-001
+const CAN = {
+  view:      ['platform','siteadmin','operator','lezer'],
+  order:     ['platform','siteadmin','operator'],
+  recipes:   ['platform','siteadmin','operator'],
+  users:     ['platform','siteadmin'],
+  locations: ['platform','siteadmin'],
+  locEdit:   ['platform'],
+  audit:     ['platform','siteadmin'],
+  hmi:       ['machine'],
+};
+
+// Orders zoals ze uit ERP General komen (fictief)
+const GENERAL = {
+  'STW-26-04812': { customer:'Noordkaap Cacao B.V.', product:'CB-GES', productName:'Cacaobonen geschoond', lot:'GH-2210-07', qty:12, weight:1150 },
+  'STW-26-04815': { customer:'Delta Cocoa Trading', product:'CB-ONG', productName:'Cacaobonen ongeschoond', lot:'IC-2210-11', qty:8, weight:1000 },
+  'STW-26-04820': { customer:'Amstel Chocolate Works', product:'CB-GES', productName:'Cacaobonen geschoond', lot:'GH-2210-09', qty:20, weight:1200 },
+  'STW-26-04822': { customer:'Havenstad Foods', product:'CB-GES', productName:'Cacaobonen geschoond', lot:'GH-2210-12', qty:6, weight:900 },
+};
+const SILOS = ['Silo 1','Silo 2','Silo 3','Silo 4','Silo 5','Silo 6'];
+const LIMITS = { min:500, max:1250 };
+
+const START = () => ({
+  recipes: [
+    { id:'algemeen', client:'Algemeen recept', general:true, weight:1000, tol:5, sticker:['{KLANT}','ORDER {ORDER}','LOT {LOT}','',''] },
+    { id:'noordkaap', client:'Noordkaap Cacao B.V.', weight:1150, tol:5, sticker:['NOORDKAAP CACAO','REF 4500123','MARK NKC-AMS','Dest. Hamburg',''] },
+    { id:'delta', client:'Delta Cocoa Trading', weight:1000, tol:4, sticker:['DELTA COCOA','CONTRACT DCT-889','MARK DC/26','Origin: Ivory Coast',''] },
+    { id:'amstel', client:'Amstel Chocolate Works', weight:1200, tol:5, sticker:['AMSTEL CHOCOLATE','PO 77812','MARK ACW','Batch per order',''] },
+  ],
+  jobs: [],
+  users: [
+    { name:'R. de Vries', role:'Platform admin', scope:'Alle locaties' },
+    { name:'M. Bakker', role:'Site admin', scope:'Site Amsterdam' },
+    { name:'J. Jansen', role:'Site operator', scope:'Big bag installatie, Hal 7' },
+    { name:'P. Visser', role:'Site operator', scope:'Hal 7' },
+    { name:'OP-017', role:'Machine operator', scope:'Big bag installatie, Hal 7' },
+    { name:'OP-022', role:'Machine operator', scope:'Big bag installatie, Hal 7' },
+    { name:'S. de Boer', role:'Lezer', scope:'Nederland' },
+    { name:'K. Mulder', role:'Lezer', scope:'Site Amsterdam' },
+  ],
+  audit: [],
+  seq: 120,
+});
+
+let DB, ROLE = 'operator', VIEW = 'dashboard', DETAIL = null, HMI_SEL = null, HMI_RUN = null;
+
+function now(offsetMin=0){ return new Date(Date.now()+offsetMin*60000); }
+function fmt(d){ return d.toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function iso(d){ return d.toISOString().replace(/\.\d+Z$/,'Z'); }
+function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+
+function seed(){
+  DB = START();
+  const mk = (order, recipeId, silo, status, minsAgo, extra={}) => {
+    const g = GENERAL[order]; const r = DB.recipes.find(x=>x.id===recipeId);
+    const j = { id:'J2026-000'+(++DB.seq), order, line:'bb', customer:g.customer, product:g.product, productName:g.productName, lot:g.lot,
+      qty:g.qty, weight:r.weight, tol:r.tol, silo, recipe:r.client, sticker:r.sticker.map(s=>fill(s,g,order)), remark:'',
+      createdBy:'J. Jansen', created:now(-minsAgo), status, ...extra };
+    DB.jobs.push(j); return j;
+  };
+  const done = mk('STW-26-04815','delta','Silo 2','Gereed',300);
+  done.report = makeReport(done, 'OP-022', now(-280), true);
+  done.status = 'Gereed';
+  mk('STW-26-04822','algemeen','Silo 4','Afgekeurd',150,{ reason:'Silo 4 is buiten bedrijf voor onderhoud (foutcode E-SILO-04)' });
+  mk('STW-26-04820','amstel','Silo 3','Ontvangen',25);
+  log('J. Jansen','Opdracht verstuurd','STW-26-04815 naar Big bag installatie', -300);
+  log('Machine','Rapport ontvangen','STW-26-04815, 8 big bags, COMPLETE', -210);
+  log('J. Jansen','Opdracht verstuurd','STW-26-04822 naar Big bag installatie', -150);
+  log('Machine','Opdracht afgekeurd','STW-26-04822: Silo 4 buiten bedrijf', -149);
+  log('M. Bakker','Gebruiker toegevoegd','OP-022 als Machine operator, Big bag installatie', -90);
+  log('J. Jansen','Klantrecept gewijzigd','Amstel Chocolate Works: stickerregel 2', -40);
+  log('J. Jansen','Opdracht verstuurd','STW-26-04820 naar Big bag installatie', -25);
+}
+
+function fill(s,g,order){ return s.replace('{KLANT}',g.customer.toUpperCase()).replace('{ORDER}',order).replace('{LOT}',g.lot); }
+function log(who,what,detail,off=0){ DB.audit.unshift({ t:now(off), who, what, detail }); }
+
+function makeReport(job, op, start, complete=true, bagsDone){
+  const n = bagsDone ?? job.qty; const bags=[]; let t=new Date(start); let total=0, out=0, stops=0, down=0;
+  for(let i=1;i<=n;i++){
+    const dur = rnd(6.8,7.8); const w = +(job.weight + rnd(-job.tol*0.9, job.tol*0.9)).toFixed(1);
+    let ok = Math.abs(w-job.weight)<=job.tol; if(i===5 && n>6){ stops++; down+=4.5; t=new Date(t.getTime()+4.5*60000); }
+    const s=new Date(t); t=new Date(t.getTime()+dur*60000); bags.push({ no:i, w, ok, s, e:new Date(t), dur:+dur.toFixed(1) });
+    total+=w; if(!ok) out++;
+  }
+  const runtime = bags.reduce((a,b)=>a+b.dur,0);
+  return { start, end:t, runtime:+runtime.toFixed(1), downtime:+down.toFixed(1), stops, alarms:stops, bags, total:+total.toFixed(1), out,
+    operator:op, status: complete?'COMPLETE':'ABORTED' };
+}
+
+// =====================================================================
+// NAVIGATIE EN RECHTEN
+// =====================================================================
+const NAV = [
+  { id:'dashboard', label:'Dashboard', ic:'▦', need:'view' },
+  { id:'new', label:'Nieuwe opdracht', ic:'＋', need:'order' },
+  { id:'jobs', label:'Opdrachten', ic:'☰', need:'view' },
+  { id:'reports', label:'Rapporten', ic:'▤', need:'view' },
+  { id:'recipes', label:'Klantrecepten', ic:'✎', need:'recipes', sec:'Beheer' },
+  { id:'locations', label:'Locaties en lijnen', ic:'⌂', need:'locations' },
+  { id:'users', label:'Gebruikers', ic:'☺', need:'users' },
+  { id:'audit', label:'Audit-log', ic:'⏱', need:'audit' },
+  { id:'hmi', label:'HMI big bag installatie', ic:'▣', need:'hmi', sec:'Machine' },
+];
+const can = (k)=>CAN[k].includes(ROLE);
+
+function renderChrome(){
+  const r = ROLES[ROLE];
+  document.getElementById('userBox').innerHTML = `${esc(r.user)}<br><small>${esc(r.label)} · ${esc(r.scopeName)}</small>`;
+  document.getElementById('scopeLabel').textContent = ROLE==='machine' ? 'HMI-weergave (geen platformtoegang)' : '';
+  const nav = document.getElementById('nav'); let h=''; let lastSec=null;
+  NAV.filter(n=>can(n.need)).forEach(n=>{
+    if(n.sec && n.sec!==lastSec){ h+=`<div class="sec">${n.sec}</div>`; lastSec=n.sec; }
+    h+=`<button class="${VIEW===n.id?'active':''}" data-view="${n.id}"><span aria-hidden="true">${n.ic}</span>${n.label}</button>`;
+  });
+  nav.innerHTML=h;
+  nav.querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.view));
+}
+
+function go(v,detail=null){ VIEW=v; DETAIL=detail; render(); window.scrollTo(0,0); }
+
+function render(){
+  const allowed = NAV.find(n=>n.id===VIEW && can(n.need)) || (VIEW==='job' && can('view'));
+  if(!allowed){ VIEW = ROLE==='machine' ? 'hmi' : 'dashboard'; }
+  renderChrome();
+  const m = document.getElementById('main');
+  const views = { dashboard:vDashboard, new:vNew, jobs:vJobs, job:vJob, reports:vReports, recipes:vRecipes, locations:vLocations, users:vUsers, audit:vAudit, hmi:vHmi };
+  m.innerHTML = views[VIEW]();
+  bind[VIEW] && bind[VIEW]();
+}
+
+function badge(s){ return `<span class="badge b-${s.toLowerCase()}">${esc(s)}</span>`; }
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0'; setTimeout(()=>t.remove(),400);},2800);
+}
+
+// =====================================================================
+// VIEWS
+// =====================================================================
+function vDashboard(){
+  const J=DB.jobs; const cnt=s=>J.filter(j=>j.status===s).length;
+  const lines = LOCATIONS.filter(l=>l.level==='Lijn / entiteit');
+  const recent = [...J].sort((a,b)=>b.created-a.created).slice(0,5);
+  return `<h1>Dashboard</h1><p class="sub">Overzicht binnen uw scope: ${esc(ROLES[ROLE].scopeName)}</p>
+  <div class="grid g4">
+    <div class="card kpi"><div class="v">${cnt('Ontvangen')+cnt('Verstuurd')}</div><div class="l">Klaar op de machine</div></div>
+    <div class="card kpi"><div class="v">${cnt('Actief')}</div><div class="l">Actief</div></div>
+    <div class="card kpi"><div class="v">${cnt('Gereed')}</div><div class="l">Gereed (rapport ontvangen)</div></div>
+    <div class="card kpi"><div class="v">${cnt('Afgekeurd')}</div><div class="l">Afgekeurd</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h2>Lijnen</h2><table><tr><th>Lijn</th><th>Locatie</th><th>Status</th></tr>
+      ${lines.map(l=>{const hal=LOCATIONS.find(x=>x.id===l.parent); const site=LOCATIONS.find(x=>x.id===hal.parent);
+        const st=l.status==='online'?(J.some(j=>j.status==='Actief')?'<span class="dot warn"></span>In bedrijf':'<span class="dot on"></span>Verbonden'):'<span class="dot off"></span>Nog niet aangesloten';
+        return `<tr><td><b>${esc(l.name)}</b></td><td>${esc(site.name)}, ${esc(hal.name)}</td><td>${st}</td></tr>`}).join('')}
+    </table></div>
+    <div class="card"><h2>Recente opdrachten</h2><table><tr><th>Order</th><th>Klant</th><th>Status</th></tr>
+      ${recent.map(j=>`<tr class="click" data-job="${j.id}"><td class="mono">${esc(j.order)}</td><td>${esc(j.customer)}</td><td>${badge(j.status)}</td></tr>`).join('')}
+    </table></div>
+  </div>
+  ${can('order')?`<button class="btn" data-go="new">＋ Nieuwe opdracht</button>`:''}`;
+}
+
+function vNew(){
+  const rec = DB.recipes;
+  return `<h1>Nieuwe opdracht</h1><p class="sub">Vul het ordernummer in zoals het in ERP General staat. De ordergegevens worden automatisch ingevuld.</p>
+  <div class="note">Demo: probeer ordernummer <b class="mono">STW-26-04812</b> (bestaande klant met recept) of <b class="mono">STW-26-04822</b> (nieuwe klant, algemeen recept).</div>
+  <div class="grid g2">
+  <div>
+    <div class="card"><h2>1. Lijn en order</h2>
+      <div class="field"><label>Lijn</label><select id="fLine"><option value="bb">Big bag installatie (Amsterdam, Hal 7)</option></select></div>
+      <div class="field"><label>Ordernummer (ERP General)</label>
+        <div class="row"><input id="fOrder" placeholder="STW-26-04812" style="flex:1"><button class="btn sec" id="fFetch">Ophalen</button></div>
+        <div class="err" id="eOrder"></div></div>
+      <div class="grid g2">
+        <div class="field"><label>Klant</label><input id="fCust" readonly></div>
+        <div class="field"><label>Product</label><input id="fProd" readonly></div>
+        <div class="field"><label>Partij / lot</label><input id="fLot" readonly></div>
+        <div class="field"><label>Aantal big bags</label><input id="fQty" readonly></div>
+      </div>
+      <div class="muted" style="font-size:12px">Velden met grijze achtergrond komen uit ERP General en zijn niet te wijzigen.</div>
+    </div>
+    <div class="card"><h2>2. Lijnspecifieke gegevens</h2>
+      <div class="field"><label>Klantrecept</label><select id="fRecipe" disabled>
+        ${rec.map(r=>`<option value="${r.id}">${esc(r.client)}${r.general?' (voor nieuwe klanten)':''}</option>`).join('')}</select></div>
+      <div class="grid g2">
+        <div class="field"><label>Bronsilo</label><select id="fSilo" disabled><option value="">Kies silo</option>${SILOS.map(s=>`<option>${s}</option>`).join('')}</select><div class="err" id="eSilo"></div></div>
+        <div class="field"><label>Gewicht per big bag (kg)</label><input id="fWeight" type="number" disabled><div class="err" id="eWeight"></div></div>
+        <div class="field"><label>Tolerantie ± (kg)</label><input id="fTol" type="number" disabled></div>
+        <div class="field"><label>Opmerking voor HMI</label><input id="fRemark" disabled placeholder="Optioneel"></div>
+      </div>
+      <label>Stickerregels</label>
+      ${[0,1,2,3,4].map(i=>`<input class="fSt" data-i="${i}" disabled style="margin-bottom:6px" maxlength="28">`).join('')}
+    </div>
+  </div>
+  <div>
+    <div class="card"><h2>Stickervoorbeeld</h2><div class="sticker" id="stPrev"><span class="muted">Nog geen order</span></div>
+      <div class="muted" style="font-size:12px;margin-top:8px">Gewicht en volgnummer worden door de machine per big bag toegevoegd.</div></div>
+    <div class="card"><h2>Opdrachtbestand (CSV) naar de machine</h2><pre class="csv" id="csvPrev">Nog geen gegevens</pre></div>
+    <div class="row"><button class="btn" id="fSend" disabled>Opdracht versturen</button><button class="btn sec" id="fClear">Leegmaken</button>
+      <span class="err" id="eSend"></span></div>
+  </div></div>`;
+}
+
+let FORM=null;
+function csvFor(j){
+  const h='SchemaVersion;Action;JobID;LineID;OrderNo;Customer;ProductCode;LotNo;Quantity;Remark;CreatedBy;CreatedAt;Recipe;SourceSilo;TargetWeight_kg;Tolerance_kg;Sticker1;Sticker2;Sticker3;Sticker4;Sticker5';
+  const q=s=>`"${String(s??'').replace(/"/g,'""')}"`;
+  const v=['1.0','NEW',j.id||'(bij verzenden)','<lijnkenmerk>',j.order,q(j.customer),j.product,j.lot,j.qty,q(j.remark),j.createdBy,j.created?iso(j.created):'(bij verzenden)',
+    q(j.recipe),j.silo||'',j.weight||'',j.tol||'',...j.sticker.map(q)].join(';');
+  return h+'\n'+v;
+}
+
+const bind = {
+  dashboard(){ bindJobRows(); document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); },
+  new(){
+    const $=id=>document.getElementById(id);
+    const editable=['fRecipe','fSilo','fWeight','fTol','fRemark'];
+    const stEls=[...document.querySelectorAll('.fSt')];
+    function setEnabled(on){ editable.forEach(i=>$(i).disabled=!on); stEls.forEach(e=>e.disabled=!on); $('fSend').disabled=!on; }
+    function applyRecipe(){
+      const r=DB.recipes.find(x=>x.id===$('fRecipe').value); const g=FORM.g;
+      $('fWeight').value=r.weight; $('fTol').value=r.tol;
+      stEls.forEach((e,i)=>e.value=fill(r.sticker[i]||'',g,FORM.order));
+      update();
+    }
+    function current(){
+      return { order:FORM.order, customer:FORM.g.customer, product:FORM.g.product, lot:FORM.g.lot, qty:FORM.g.qty,
+        recipe:DB.recipes.find(x=>x.id===$('fRecipe').value).client, silo:$('fSilo').value, weight:+$('fWeight').value, tol:+$('fTol').value,
+        remark:$('fRemark').value, sticker:stEls.map(e=>e.value), createdBy:ROLES[ROLE].user.split(' (')[0] };
+    }
+    function update(){
+      if(!FORM) return; const j=current();
+      $('stPrev').innerHTML = j.sticker.filter(Boolean).map(esc).join('<br>') + `<br><span class="muted">GEWICHT: ____ kg · BAG __/${j.qty}</span>`;
+      $('csvPrev').textContent = csvFor(j);
+      const w=j.weight; $('eWeight').textContent = (w<LIMITS.min||w>LIMITS.max)?`Gewicht moet tussen ${LIMITS.min} en ${LIMITS.max} kg liggen.`:'';
+      $('eSilo').textContent='';
+    }
+    $('fFetch').onclick=()=>{
+      const o=$('fOrder').value.trim().toUpperCase(); $('eOrder').textContent='';
+      if(!o){ $('eOrder').textContent='Vul een ordernummer in.'; return; }
+      $('fFetch').textContent='Ophalen…';
+      setTimeout(()=>{
+        $('fFetch').textContent='Ophalen';
+        const g=GENERAL[o];
+        if(!g){ $('eOrder').textContent='Ordernummer niet gevonden in ERP General.'; FORM=null; setEnabled(false); return; }
+        FORM={order:o,g}; $('fOrder').value=o;
+        $('fCust').value=g.customer; $('fProd').value=`${g.product} · ${g.productName}`; $('fLot').value=g.lot; $('fQty').value=g.qty;
+        const r=DB.recipes.find(x=>x.client===g.customer) || DB.recipes.find(x=>x.general);
+        $('fRecipe').value=r.id; setEnabled(true); applyRecipe();
+        toast(r.general?`Geen klantrecept voor ${g.customer}: algemeen recept geselecteerd.`:`Ordergegevens opgehaald, recept ${r.client} geselecteerd.`);
+      },600);
+    };
+    $('fOrder').addEventListener('keydown',e=>{ if(e.key==='Enter') $('fFetch').click(); $('eOrder').textContent=''; });
+    $('fRecipe').onchange=applyRecipe;
+    ['fSilo','fWeight','fTol','fRemark'].forEach(i=>$(i).oninput=update);
+    stEls.forEach(e=>e.oninput=update);
+    $('fClear').onclick=()=>{ FORM=null; go('new'); };
+    $('fSend').onclick=()=>{
+      const j=current(); let bad=false;
+      if(!j.silo){ $('eSilo').textContent='Kies een bronsilo.'; bad=true; }
+      if(j.weight<LIMITS.min||j.weight>LIMITS.max){ bad=true; }
+      if(bad){ $('eSend').textContent='Controleer de gemarkeerde velden.'; return; }
+      const job={ ...j, id:'J2026-000'+(++DB.seq), line:'bb', productName:FORM.g.productName, created:now(), status:'Verstuurd' };
+      DB.jobs.push(job); log(job.createdBy,'Opdracht verstuurd',`${job.order} naar Big bag installatie`);
+      FORM=null; toast(`Opdracht ${job.order} verstuurd naar de machine.`);
+      setTimeout(()=>{ job.status='Ontvangen'; log('Machine','Ontvangstbevestiging',`${job.order}: OK`); toast(`Machine bevestigt ontvangst van ${job.order}.`); if(['jobs','dashboard','job'].includes(VIEW)) render(); },2500);
+      go('job',job.id);
+    };
+  },
+  jobs(){ bindJobRows(); document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{JOBFILTER=b.dataset.f; render();}); },
+  job(){
+    const c=document.getElementById('cancelBtn'); if(c) c.onclick=()=>{ const j=DB.jobs.find(x=>x.id===DETAIL); j.status='Geannuleerd'; log(ROLES[ROLE].user.split(' (')[0],'Opdracht geannuleerd',j.order); toast('Opdracht geannuleerd; de machine ontvangt een CANCEL-bestand.'); render(); };
+    const d=document.getElementById('dlBtn'); if(d) d.onclick=()=>downloadReport(DB.jobs.find(x=>x.id===DETAIL));
+    const b=document.getElementById('backBtn'); if(b) b.onclick=()=>go('jobs');
+  },
+  reports(){ bindJobRows(); document.querySelectorAll('[data-dl]').forEach(b=>b.onclick=e=>{e.stopPropagation(); downloadReport(DB.jobs.find(x=>x.id===b.dataset.dl));}); },
+  recipes(){
+    const $=id=>document.getElementById(id);
+    document.querySelectorAll('[data-rec]').forEach(r=>r.onclick=()=>{ EDITREC=r.dataset.rec; render(); });
+    const nb=$('newRec'); if(nb) nb.onclick=()=>{ EDITREC='__new'; render(); };
+    const sv=$('saveRec'); if(sv) sv.onclick=()=>{
+      const client=$('rClient').value.trim(); if(!client){ $('eClient').textContent='Vul een klantnaam in.'; return; }
+      const w=+$('rWeight').value; if(w<LIMITS.min||w>LIMITS.max){ $('eW').textContent=`Tussen ${LIMITS.min} en ${LIMITS.max} kg.`; return; }
+      const st=[...document.querySelectorAll('.rSt')].map(e=>e.value);
+      if(EDITREC==='__new'){ DB.recipes.push({ id:'r'+Date.now(), client, weight:w, tol:+$('rTol').value, sticker:st }); log(ROLES[ROLE].user.split(' (')[0],'Klantrecept aangemaakt',client); toast(`Klantrecept ${client} aangemaakt.`); }
+      else { const r=DB.recipes.find(x=>x.id===EDITREC); Object.assign(r,{client: r.general?r.client:client, weight:w, tol:+$('rTol').value, sticker:st}); log(ROLES[ROLE].user.split(' (')[0],'Klantrecept gewijzigd',r.client); toast('Klantrecept opgeslagen.'); }
+      EDITREC=null; render();
+    };
+    const cc=$('cancelRec'); if(cc) cc.onclick=()=>{ EDITREC=null; render(); };
+    ['rClient','rWeight'].forEach(i=>{ const e=$(i); if(e) e.oninput=()=>{ $('eClient').textContent=''; $('eW').textContent=''; }; });
+  },
+  users(){
+    const $=id=>document.getElementById(id);
+    const a=$('addUser'); if(a) a.onclick=()=>{
+      const n=$('uName').value.trim(); if(!n){ $('eU').textContent='Vul een naam in.'; return; }
+      const role=$('uRole').value, scope=$('uScope').value;
+      DB.users.push({ name:n, role, scope }); log(ROLES[ROLE].user.split(' (')[0],'Gebruiker toegevoegd',`${n} als ${role}, ${scope}`); toast(`${n} toegevoegd als ${role}.`); render();
+    };
+    const u=$('uName'); if(u) u.oninput=()=>$('eU').textContent='';
+  },
+  locations(){},
+  audit(){},
+  hmi(){
+    document.querySelectorAll('.hmi .job').forEach(e=>e.onclick=()=>{ if(HMI_RUN) return; HMI_SEL=e.dataset.id; render(); });
+    const s=document.getElementById('hStart'); if(s) s.onclick=hmiStart;
+    const st=document.getElementById('hStop'); if(st) st.onclick=()=>hmiFinish(false);
+  },
+};
+
+let JOBFILTER='Alle', EDITREC=null;
+function bindJobRows(){ document.querySelectorAll('[data-job]').forEach(r=>r.onclick=()=>go('job',r.dataset.job)); }
+
+function vJobs(){
+  const filters=['Alle','Ontvangen','Actief','Gereed','Afgekeurd','Geannuleerd'];
+  const list=[...DB.jobs].filter(j=>JOBFILTER==='Alle'||j.status===JOBFILTER).sort((a,b)=>b.created-a.created);
+  return `<h1>Opdrachten</h1><p class="sub">Alle opdrachten binnen uw scope.</p>
+  <div class="row" style="margin-bottom:12px">${filters.map(f=>`<button class="btn sm ${JOBFILTER===f?'':'sec'}" data-f="${f}">${f}</button>`).join('')}
+  ${can('order')?'<button class="btn sm right" onclick="go(\'new\')">＋ Nieuwe opdracht</button>':''}</div>
+  <div class="card" style="padding:0;overflow:auto"><table>
+    <tr><th>Opdracht</th><th>Order</th><th>Klant</th><th>Lijn</th><th>Silo</th><th>Big bags</th><th>Verstuurd</th><th>Status</th></tr>
+    ${list.map(j=>`<tr class="click" data-job="${j.id}"><td class="mono">${j.id}</td><td class="mono">${esc(j.order)}</td><td>${esc(j.customer)}</td>
+      <td>Big bag installatie</td><td>${esc(j.silo)}</td><td>${j.qty} × ${j.weight} kg</td><td>${fmt(j.created)}</td><td>${badge(j.status)}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">Geen opdrachten met deze status.</td></tr>'}
+  </table></div>`;
+}
+
+function vJob(){
+  const j=DB.jobs.find(x=>x.id===DETAIL); if(!j) return vJobs();
+  const canCancel = can('order') && ['Verstuurd','Ontvangen'].includes(j.status);
+  const steps=['Verstuurd','Ontvangen','Actief','Gereed'];
+  const idx=steps.indexOf(j.status);
+  return `<button class="btn sm sec" id="backBtn">← Opdrachten</button>
+  <h1 style="margin-top:12px">Opdracht ${esc(j.order)} ${badge(j.status)}</h1><p class="sub">${j.id} · Big bag installatie, Amsterdam Hal 7 · verstuurd door ${esc(j.createdBy)} op ${fmt(j.created)}</p>
+  ${j.status==='Afgekeurd'?`<div class="note" style="background:var(--err-bg);border-color:var(--err)"><b>Afgekeurd door de machine:</b> ${esc(j.reason)}</div>`:''}
+  ${idx>=0?`<div class="card"><div class="row" style="gap:0">${steps.map((s,i)=>`<div style="flex:1;text-align:center;padding:6px;border-bottom:4px solid ${i<=idx?'var(--blue)':'var(--line)'};${i<=idx?'font-weight:bold;color:var(--navy)':'color:var(--muted)'}">${s}</div>`).join('')}</div>
+    ${j.status==='Ontvangen'?'<p class="muted" style="margin:10px 0 0">De opdracht staat klaar op de HMI. Een machine operator selecteert en start hem daar.</p>':''}</div>`:''}
+  <div class="grid g2">
+    <div class="card"><h2>Gegevens</h2><table>
+      ${[['Klant',j.customer],['Product',`${j.product} · ${j.productName}`],['Partij / lot',j.lot],['Klantrecept',j.recipe],['Bronsilo',j.silo],['Aantal big bags',j.qty],['Gewicht per big bag',`${j.weight} kg ± ${j.tol}`],['Opmerking',j.remark||'—']]
+        .map(([k,v])=>`<tr><td class="muted" style="width:40%">${k}</td><td>${esc(v)}</td></tr>`).join('')}</table>
+      ${canCancel?'<div style="margin-top:12px"><button class="btn danger" id="cancelBtn">Opdracht annuleren</button></div>':''}</div>
+    <div class="card"><h2>Sticker</h2><div class="sticker">${j.sticker.filter(Boolean).map(esc).join('<br>')}<br>GEWICHT: ${j.report?j.report.bags[0].w:'____'} kg · BAG 1/${j.qty}</div>
+      <h2 style="margin-top:16px">Opdrachtbestand</h2><pre class="csv">${esc(csvFor(j))}</pre></div>
+  </div>
+  ${j.report?reportBlock(j):''}`;
+}
+
+function reportBlock(j){
+  const r=j.report;
+  return `<div class="card"><div class="row"><h2 style="margin:0">Rapport ${r.status==='ABORTED'?badge('Afgekeurd').replace('Afgekeurd','Afgebroken'):''}</h2><button class="btn sm sec right" id="dlBtn">Rapport downloaden (CSV)</button></div>
+    <div class="grid g4" style="margin:14px 0">
+      <div class="kpi"><div class="v">${r.total.toLocaleString('nl-NL')} kg</div><div class="l">Totaalgewicht</div></div>
+      <div class="kpi"><div class="v">${r.bags.length} / ${j.qty}</div><div class="l">Big bags gevuld</div></div>
+      <div class="kpi"><div class="v">${r.runtime} min</div><div class="l">Looptijd</div></div>
+      <div class="kpi"><div class="v">${r.downtime} min</div><div class="l">Stilstand (${r.stops} stop, ${r.alarms} alarm)</div></div>
+    </div>
+    <div class="muted" style="margin-bottom:8px">Start ${fmt(r.start)} · einde ${fmt(r.end)} · machine operator ${esc(r.operator)} · ${r.out} big bags buiten tolerantie</div>
+    <div style="overflow:auto"><table><tr><th>Bag</th><th>Gewicht</th><th>Binnen tolerantie</th><th>Start</th><th>Einde</th><th>Duur</th></tr>
+    ${r.bags.map(b=>`<tr><td>${b.no}</td><td>${b.w} kg</td><td>${b.ok?'✓':'<span style="color:var(--err)">✗</span>'}</td><td>${fmt(b.s)}</td><td>${fmt(b.e)}</td><td>${b.dur} min</td></tr>`).join('')}
+    </table></div></div>`;
+}
+
+function downloadReport(j){
+  const r=j.report; if(!r) return;
+  let s='SchemaVersion;RecordType;JobID;OrderNo;StartTime;EndTime;Runtime_min;Downtime_min;StopCount;AlarmCount;QuantityProduced;OperatorID;Status;BagNo;Weight_kg;InTolerance;SourceSilo\n';
+  r.bags.forEach(b=>s+=`1.0;DETAIL;${j.id};${j.order};${iso(b.s)};${iso(b.e)};${b.dur};0;0;0;;${r.operator};;${b.no};${b.w};${b.ok?1:0};${j.silo}\n`);
+  s+=`1.0;TOTAL;${j.id};${j.order};${iso(r.start)};${iso(r.end)};${r.runtime};${r.downtime};${r.stops};${r.alarms};${r.bags.length};${r.operator};${r.status};;${r.total};${r.out};${j.silo}\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'text/csv'})); a.download=`Rapport_${j.order}.csv`; a.click();
+}
+
+function vReports(){
+  const list=DB.jobs.filter(j=>j.report).sort((a,b)=>b.report.end-a.report.end);
+  return `<h1>Rapporten</h1><p class="sub">Rapporten die de machines na afloop van een opdracht terugsturen.</p>
+  <div class="card" style="padding:0;overflow:auto"><table><tr><th>Order</th><th>Klant</th><th>Gereed</th><th>Big bags</th><th>Totaalgewicht</th><th>Looptijd</th><th>Stilstand</th><th>Status</th><th></th></tr>
+  ${list.map(j=>`<tr class="click" data-job="${j.id}"><td class="mono">${esc(j.order)}</td><td>${esc(j.customer)}</td><td>${fmt(j.report.end)}</td><td>${j.report.bags.length}</td>
+    <td>${j.report.total.toLocaleString('nl-NL')} kg</td><td>${j.report.runtime} min</td><td>${j.report.downtime} min</td><td>${esc(j.report.status)}</td>
+    <td><button class="btn sm sec" data-dl="${j.id}">CSV</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Nog geen rapporten.</td></tr>'}
+  </table></div>`;
+}
+
+function vRecipes(){
+  const editing = EDITREC ? (EDITREC==='__new' ? { client:'', weight:1000, tol:5, sticker:['','','','',''] } : DB.recipes.find(r=>r.id===EDITREC)) : null;
+  return `<h1>Klantrecepten</h1><p class="sub">Big bag installatie · per klant de stickerindeling en standaardwaarden. Het algemene recept is voor nieuwe klanten.</p>
+  <div class="grid g2">
+  <div class="card" style="padding:0"><table><tr><th>Klant</th><th>Standaard</th><th>Sticker (regel 1)</th></tr>
+    ${DB.recipes.map(r=>`<tr class="click" data-rec="${r.id}"><td><b>${esc(r.client)}</b>${r.general?' <span class="badge b-verstuurd">algemeen</span>':''}</td><td>${r.weight} kg ± ${r.tol}</td><td class="mono">${esc(r.sticker[0])}</td></tr>`).join('')}
+  </table><div style="padding:12px"><button class="btn" id="newRec">＋ Nieuw klantrecept</button></div></div>
+  <div class="card">${editing?`<h2>${EDITREC==='__new'?'Nieuw klantrecept':'Recept bewerken'}</h2>
+    <div class="field"><label>Klant</label><input id="rClient" value="${esc(editing.client)}" ${editing.general?'readonly':''} placeholder="Naam zoals in ERP General"><div class="err" id="eClient"></div></div>
+    <div class="grid g2"><div class="field"><label>Gewicht per big bag (kg)</label><input id="rWeight" type="number" value="${editing.weight}"><div class="err" id="eW"></div></div>
+    <div class="field"><label>Tolerantie ± (kg)</label><input id="rTol" type="number" value="${editing.tol}"></div></div>
+    <label>Stickerregels</label>${editing.sticker.map(s=>`<input class="rSt" value="${esc(s)}" maxlength="28" style="margin-bottom:6px">`).join('')}
+    <div class="muted" style="font-size:12px;margin-bottom:12px">Gebruik {KLANT}, {ORDER} of {LOT} om ordergegevens automatisch in te vullen.</div>
+    <div class="row"><button class="btn" id="saveRec">Opslaan</button><button class="btn sec" id="cancelRec">Annuleren</button></div>`
+    :'<div class="locked">Kies een recept om te bekijken of te wijzigen,<br>of maak een nieuw klantrecept.</div>'}</div>
+  </div>`;
+}
+
+function vLocations(){
+  const kids=id=>LOCATIONS.filter(l=>l.parent===id);
+  const node=l=>`<li>${l.level==='Lijn / entiteit'?`<span class="dot ${l.status==='online'?'on':'off'}"></span>`:''}<b>${esc(l.name)}</b><span class="lvl">${l.level}${l.type?' · '+l.type:''}${l.status&&l.status!=='online'?' · '+l.status:''}</span>
+    ${kids(l.id).length?`<ul>${kids(l.id).map(node).join('')}</ul>`:''}</li>`;
+  return `<h1>Locaties en lijnen</h1><p class="sub">Land, site, hal of positie, en lijn. De lijn is de kleinste eenheid.</p>
+  ${can('locEdit')?'':'<div class="note">Alleen een Platform admin kan locaties en lijnen toevoegen of wijzigen.</div>'}
+  <div class="grid g2"><div class="card tree"><ul>${node(LOCATIONS[0])}</ul></div>
+  <div class="card"><h2>Lijninstellingen: Big bag installatie</h2><table>
+    <tr><td class="muted">Type</td><td>Big bag vulstation met weging en stickerprinter</td></tr>
+    <tr><td class="muted">Bronsilo's</td><td>${SILOS.join(', ')}</td></tr>
+    <tr><td class="muted">Gewicht per big bag</td><td>${LIMITS.min} tot ${LIMITS.max} kg</td></tr>
+    <tr><td class="muted">Stickerregels</td><td>5 regels, max. 28 tekens</td></tr>
+    <tr><td class="muted">Integratiepunt</td><td><span class="dot on"></span>Verbonden (Siemens switch)</td></tr>
+    <tr><td class="muted">Bestandsopbouw</td><td>SchemaVersion 1.0</td></tr>
+  </table>${can('locEdit')?'<div style="margin-top:12px"><button class="btn sec" onclick="toast(\'In de demo zijn lijninstellingen alleen-lezen.\')">Instellingen wijzigen</button></div>':''}</div></div>`;
+}
+
+function vUsers(){
+  const isSite = ROLE==='siteadmin';
+  const roles = isSite ? ['Site operator','Machine operator','Lezer'] : ['Site admin','Site operator','Machine operator','Lezer'];
+  const scopes = isSite ? ['Site Amsterdam','Hal 7','Big bag installatie, Hal 7','Hal 5'] : ['Site Amsterdam','Site Rotterdam','Hal 7','Big bag installatie, Hal 7','Nederland'];
+  const list = isSite ? DB.users.filter(u=>u.role!=='Platform admin' && !/Rotterdam/.test(u.scope)) : DB.users;
+  return `<h1>Gebruikers</h1><p class="sub">${isSite?'Als site admin voegt u site operators, machine operators en lezers toe binnen Site Amsterdam.':'Als Platform admin wijst u site admins aan en beheert u alle gebruikers.'}</p>
+  <div class="grid g2"><div class="card" style="padding:0"><table><tr><th>Naam</th><th>Rol</th><th>Scope</th></tr>
+    ${list.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.role)}</td><td>${esc(u.scope)}</td></tr>`).join('')}</table></div>
+  <div class="card"><h2>Gebruiker toevoegen</h2>
+    <div class="field"><label>Naam (account uit de Steinweg identity provider)</label><input id="uName" placeholder="A. Pietersen"><div class="err" id="eU"></div></div>
+    <div class="field"><label>Rol</label><select id="uRole">${roles.map(r=>`<option>${r}</option>`).join('')}</select></div>
+    <div class="field"><label>Scope</label><select id="uScope">${scopes.map(s=>`<option>${s}</option>`).join('')}</select></div>
+    <button class="btn" id="addUser">Toevoegen</button>
+    <p class="muted" style="font-size:12px">Inloggen gaat via single sign-on met meervoudige authenticatie. Elke toewijzing komt in het audit-log.</p></div></div>`;
+}
+
+function vAudit(){
+  return `<h1>Audit-log</h1><p class="sub">Alle handelingen en bestanden${ROLE==='siteadmin'?' binnen Site Amsterdam':''}.</p>
+  <div class="card" style="padding:0;overflow:auto"><table><tr><th>Tijd</th><th>Wie</th><th>Handeling</th><th>Details</th></tr>
+  ${DB.audit.map(a=>`<tr><td>${fmt(a.t)}</td><td>${esc(a.who)}</td><td>${esc(a.what)}</td><td>${esc(a.detail)}</td></tr>`).join('')}</table></div>`;
+}
+
+// =====================================================================
+// HMI-SIMULATIE (machine operator)
+// =====================================================================
+function vHmi(){
+  const waiting=DB.jobs.filter(j=>j.status==='Ontvangen').sort((a,b)=>a.created-b.created);
+  const active=DB.jobs.find(j=>j.status==='Actief');
+  if(!active && HMI_SEL && !waiting.some(j=>j.id===HMI_SEL)) HMI_SEL=null;
+  const sel = active || waiting.find(j=>j.id===HMI_SEL);
+  const done = HMI_RUN ? HMI_RUN.bags.length : 0;
+  return `<h1>HMI big bag installatie</h1><p class="sub">Simulatie van het bedienpaneel aan de machine. De machine operator heeft geen toegang tot het platform; hij selecteert en start hier alleen klaargezette opdrachten.</p>
+  <div class="hmi">
+    <div class="bar"><span>VULSTATION BIG BAG · HAL 7</span><span>Operator OP-017 · ${new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}</span></div>
+    <div class="grid g2">
+      <div class="panel"><h3>Klaargezette opdrachten (${waiting.length})</h3>
+        ${waiting.map(j=>`<div class="job ${HMI_SEL===j.id?'sel':''}" data-id="${j.id}"><b>${esc(j.order)}</b> · ${esc(j.customer)}<br>
+          <span class="lbl">${j.qty} × ${j.weight} kg ± ${j.tol} · ${esc(j.silo)} · lot ${esc(j.lot)}</span></div>`).join('') || '<div class="lbl">Geen opdrachten. Verstuur er een vanuit het platform (rol Site operator).</div>'}
+      </div>
+      <div class="panel"><h3>${active?'Actieve opdracht':'Geselecteerde opdracht'}</h3>
+        ${sel?`<div class="lbl">Order</div><div style="font-size:18px;font-weight:bold;color:#fff">${esc(sel.order)} · ${esc(sel.customer)}</div>
+          <div class="grid g2" style="margin-top:10px"><div><div class="lbl">Big bag</div><div class="big">${done} / ${sel.qty}</div></div>
+          <div><div class="lbl">Laatste gewicht</div><div class="big">${HMI_RUN&&HMI_RUN.bags.length?HMI_RUN.bags[HMI_RUN.bags.length-1].w:'—'} <span style="font-size:14px">kg</span></div></div></div>
+          <div class="prog"><div style="width:${Math.round(done/sel.qty*100)}%"></div></div>
+          <div class="lbl" style="margin-top:10px">Silo: ${esc(sel.silo)} · doel ${sel.weight} kg ± ${sel.tol}</div>
+          <div class="lbl">Sticker: ${sel.sticker.filter(Boolean).map(esc).join(' / ')}</div>`
+          :'<div class="lbl">Selecteer links een opdracht.</div>'}
+      </div>
+    </div>
+    <div class="row">
+      <button class="hbtn start" id="hStart" ${sel&&!active?'':'disabled'}>▶ START</button>
+      <button class="hbtn stop" id="hStop" ${active?'':'disabled'}>■ STOP</button>
+      <span class="lbl right">Demo: één big bag duurt hier 1 seconde in plaats van circa 7 minuten.</span>
+    </div>
+    ${HMI_RUN&&HMI_RUN.bags.length?`<div class="panel" style="margin-top:12px"><h3>Gewogen big bags</h3><table><tr><th>Bag</th><th>Gewicht</th><th>Tolerantie</th></tr>
+      ${HMI_RUN.bags.slice(-5).reverse().map(b=>`<tr><td>${b.no}</td><td>${b.w} kg</td><td>${b.ok?'OK':'BUITEN'}</td></tr>`).join('')}</table></div>`:''}
+  </div>`;
+}
+
+let HMI_TIMER=null;
+function hmiStart(){
+  const j=DB.jobs.find(x=>x.id===HMI_SEL); if(!j) return;
+  j.status='Actief'; j.started=now(); log('OP-017','Opdracht gestart op HMI',j.order);
+  HMI_RUN={ job:j, bags:[], full:makeReport(j,'OP-017',now(),true) };
+  render();
+  HMI_TIMER=setInterval(()=>{
+    const r=HMI_RUN; r.bags.push(r.full.bags[r.bags.length]);
+    if(r.bags.length>=j.qty){ hmiFinish(true); return; }
+    if(VIEW==='hmi') render();
+  },1000);
+}
+function hmiFinish(complete){
+  clearInterval(HMI_TIMER); const r=HMI_RUN; if(!r) return; const j=r.job;
+  if(complete){ j.report=r.full; }
+  else { const n=r.bags.length; j.report=makeReport(j,'OP-017',j.started,false,n); j.report.bags=r.bags.slice(); j.report.total=+r.bags.reduce((a,b)=>a+b.w,0).toFixed(1); }
+  j.status='Gereed'; HMI_RUN=null; HMI_SEL=null;
+  log('Machine','Rapport ontvangen',`${j.order}, ${j.report.bags.length} big bags, ${j.report.status}`);
+  toast(`Opdracht ${j.order} ${complete?'afgerond':'gestopt'}. Rapport is naar het platform gestuurd.`);
+  render();
+}
+
+// =====================================================================
+// START
+// =====================================================================
+const roleSel=document.getElementById('roleSel');
+roleSel.innerHTML=Object.entries(ROLES).map(([k,r])=>`<option value="${k}">${r.label}</option>`).join('');
+roleSel.value=ROLE;
+roleSel.onchange=()=>{ ROLE=roleSel.value; EDITREC=null; VIEW = ROLE==='machine'?'hmi':'dashboard'; render(); toast(`U bekijkt het platform nu als ${ROLES[ROLE].label}.`); };
+document.getElementById('resetBtn').onclick=()=>{ clearInterval(HMI_TIMER); HMI_RUN=null; HMI_SEL=null; seed(); go(ROLE==='machine'?'hmi':'dashboard'); toast('Demo-gegevens teruggezet.'); };
+seed(); render();
+</script>
+</body>
+</html>
