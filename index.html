@@ -74,6 +74,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--tint);border-col
 .locked{background:var(--grey-bg);border:1px dashed #B8C0CB;padding:28px;text-align:center;color:var(--muted);border-radius:8px}
 pre.csv{background:#F4F5F7;border:1px solid var(--line);padding:10px;border-radius:5px;font-size:11.5px;overflow:auto;white-space:pre;margin:0}
 .sticker{border:2px solid #222;border-radius:4px;padding:10px 12px;font-family:"Courier New",monospace;font-size:13px;background:#fff;width:260px;line-height:1.5}
+.crumbs{margin:-6px 0 16px;font-size:13px}.crumbs a{text-decoration:none}.crumbs a:hover{text-decoration:underline}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px 18px;text-align:left;cursor:pointer;min-height:130px;display:flex;flex-direction:column;gap:6px;color:var(--text);transition:border-color .15s,box-shadow .15s}
+.tile:hover{border-color:var(--blue);box-shadow:0 2px 10px rgba(0,112,192,.15)}
+.tile .t-ic{font-size:22px;color:var(--blue)}
+.tile .t-name{font-weight:bold;font-size:16px;color:var(--navy)}
+.tile .t-name.big{font-size:26px}
+.tile .t-sub{color:var(--muted);font-size:13px}
+.tile .t-status{font-size:13px;margin-top:auto}
 .tree ul{list-style:none;margin:0;padding-left:20px;border-left:1px dashed #C5CCD6}
 .tree>ul{border-left:0;padding-left:0}
 .tree li{padding:5px 0}
@@ -131,6 +140,12 @@ const LOCATIONS = [
   { id:'ams-h5', name:'Hal 5', level:'Hal / positie', parent:'ams' },
   { id:'bb', name:'Big bag installatie', level:'Lijn / entiteit', parent:'ams-h7', status:'online', type:'Big bag vulstation' },
   { id:'jb', name:'Jute bag filler', level:'Lijn / entiteit', parent:'ams-h5', status:'gepland', type:'Jutezakvuller' },
+  { id:'ams-h3', name:'Hal 3', level:'Hal / positie', parent:'ams' },
+  { id:'ams-h8', name:'Hal 8', level:'Hal / positie', parent:'ams' },
+  { id:'silo7', name:'Silo-installatie', level:'Lijn / entiteit', parent:'ams-h7', status:'gepland', type:'Siloset met redlers' },
+  { id:'sort5', name:'Sorteerlijnen 1-4', level:'Lijn / entiteit', parent:'ams-h5', status:'gepland', type:'Sorteerlijn' },
+  { id:'zeef3', name:'Zeefinstallatie', level:'Lijn / entiteit', parent:'ams-h3', status:'gepland', type:'Zeef- en reinigingslijn' },
+  { id:'pal8', name:'Palletiseerlijn', level:'Lijn / entiteit', parent:'ams-h8', status:'gepland', type:'Palletiseerder' },
   { id:'rtm', name:'Rotterdam', level:'Site', parent:'nl' },
   { id:'rtm-b', name:'Hal B', level:'Hal / positie', parent:'rtm' },
   { id:'rtm-l1', name:'Afvullijn 1', level:'Lijn / entiteit', parent:'rtm-b', status:'gepland', type:'Afvullijn' },
@@ -188,7 +203,8 @@ const START = () => ({
   seq: 120,
 });
 
-let DB, ROLE = 'operator', VIEW = 'dashboard', DETAIL = null, HMI_SEL = null, HMI_RUN = null;
+let SEL = { site:null, hal:null, line:null };
+let DB, ROLE = 'operator', VIEW = 'site', DETAIL = null, HMI_SEL = null, HMI_RUN = null;
 
 function now(offsetMin=0){ return new Date(Date.now()+offsetMin*60000); }
 function fmt(d){ return d.toLocaleString('nl-NL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
@@ -239,7 +255,8 @@ function makeReport(job, op, start, complete=true, bagsDone){
 // NAVIGATIE EN RECHTEN
 // =====================================================================
 const NAV = [
-  { id:'dashboard', label:'Dashboard', ic:'▦', need:'view' },
+  { id:'site', label:'Mijn site', ic:'◉', need:'view' },
+  { id:'dashboard', label:'Dashboard machine', ic:'▦', need:'view' },
   { id:'new', label:'Nieuwe opdracht', ic:'＋', need:'order' },
   { id:'jobs', label:'Opdrachten', ic:'☰', need:'view' },
   { id:'reports', label:'Rapporten', ic:'▤', need:'view' },
@@ -268,10 +285,11 @@ function go(v,detail=null){ VIEW=v; DETAIL=detail; render(); window.scrollTo(0,0
 
 function render(){
   const allowed = NAV.find(n=>n.id===VIEW && can(n.need)) || (VIEW==='job' && can('view'));
-  if(!allowed){ VIEW = ROLE==='machine' ? 'hmi' : 'dashboard'; }
+  if(!allowed){ VIEW = ROLE==='machine' ? 'hmi' : 'site'; }
+  if(VIEW==='dashboard' && !SEL.line){ VIEW='site'; }
   renderChrome();
   const m = document.getElementById('main');
-  const views = { dashboard:vDashboard, new:vNew, jobs:vJobs, job:vJob, reports:vReports, recipes:vRecipes, locations:vLocations, users:vUsers, audit:vAudit, hmi:vHmi };
+  const views = { site:vSite, dashboard:vDashboard, new:vNew, jobs:vJobs, job:vJob, reports:vReports, recipes:vRecipes, locations:vLocations, users:vUsers, audit:vAudit, hmi:vHmi };
   m.innerHTML = views[VIEW]();
   bind[VIEW] && bind[VIEW]();
 }
@@ -285,11 +303,81 @@ function toast(msg){
 // =====================================================================
 // VIEWS
 // =====================================================================
+
+// ---------------------------------------------------------------------
+// MIJN SITE: site -> hal -> machine -> dashboard
+// ---------------------------------------------------------------------
+const loc = id => LOCATIONS.find(l=>l.id===id);
+const childrenOf = id => LOCATIONS.filter(l=>l.parent===id);
+function ancestors(id){ const out=[]; let l=loc(id); while(l){ out.push(l.id); l=loc(l.parent); } return out; }
+// Een lijn is zichtbaar als de scope van de rol de lijn zelf of een bovenliggend niveau is.
+function visibleLines(){ const sc=ROLES[ROLE].scope; return LOCATIONS.filter(l=>l.level==='Lijn / entiteit' && ancestors(l.id).includes(sc)); }
+function visibleHalls(siteId){ const ids=new Set(visibleLines().map(l=>l.parent)); return childrenOf(siteId).filter(h=>ids.has(h.id)).sort((x,y)=>x.name.localeCompare(y.name,'nl',{numeric:true})); }
+function visibleSites(){ const ids=new Set(visibleLines().map(l=>loc(l.parent).parent)); return LOCATIONS.filter(l=>ids.has(l.id)); }
+function lineJobs(id){ return DB.jobs.filter(j=>j.line===id); }
+function lineState(l){
+  if(l.status!=='online') return { dot:'off', text:'Nog niet aangesloten' };
+  const J=lineJobs(l.id);
+  if(J.some(j=>j.status==='Actief')) return { dot:'warn', text:'In bedrijf' };
+  return { dot:'on', text:'Verbonden' };
+}
+function crumbs(){
+  const parts=[`<a href="#" data-crumb="root">Mijn site</a>`];
+  if(SEL.site) parts.push(`<a href="#" data-crumb="site">${esc(loc(SEL.site).name)}</a>`);
+  if(SEL.hal) parts.push(`<a href="#" data-crumb="hal">${esc(loc(SEL.hal).name)}</a>`);
+  if(SEL.line) parts.push(`<b>${esc(loc(SEL.line).name)}</b>`);
+  return `<div class="crumbs">${parts.join(' <span class="muted">›</span> ')}</div>`;
+}
+function bindCrumbs(){
+  document.querySelectorAll('[data-crumb]').forEach(a=>a.onclick=e=>{ e.preventDefault();
+    const c=a.dataset.crumb;
+    if(c==='root'){ SEL={site: visibleSites().length===1?visibleSites()[0].id:null, hal:null, line:null}; }
+    if(c==='site'){ SEL.hal=null; SEL.line=null; }
+    if(c==='hal'){ SEL.line=null; }
+    go('site'); });
+}
+
+function vSite(){
+  const sites=visibleSites();
+  if(!SEL.site && sites.length===1) SEL.site=sites[0].id;
+  // stap 1: site kiezen (alleen bij een scope met meerdere sites)
+  if(!SEL.site){
+    return `<h1>Mijn site</h1><p class="sub">Kies een site.</p>${crumbs()}
+    <div class="tiles">${sites.map(s=>{ const halls=visibleHalls(s.id); const n=halls.reduce((a,h)=>a+childrenOf(h.id).length,0);
+      return `<button class="tile" data-site="${s.id}"><div class="t-ic" aria-hidden="true">⌂</div><div class="t-name">${esc(s.name)}</div>
+        <div class="t-sub">${halls.length} hallen · ${n} machines</div></button>`; }).join('')}</div>`;
+  }
+  // stap 2: hal kiezen
+  if(!SEL.hal){
+    const halls=visibleHalls(SEL.site);
+    return `<h1>${esc(loc(SEL.site).name)}</h1><p class="sub">Kies een hal.</p>${crumbs()}
+    <div class="tiles">${halls.map(h=>{ const lines=childrenOf(h.id).filter(l=>visibleLines().includes(l));
+      const on=lines.filter(l=>l.status==='online').length; const busy=lines.some(l=>lineState(l).dot==='warn');
+      return `<button class="tile" data-hal="${h.id}"><div class="t-name big">${esc(h.name)}</div>
+        <div class="t-sub">${lines.length} ${lines.length===1?'machine':'machines'}</div>
+        <div class="t-status"><span class="dot ${busy?'warn':on?'on':'off'}"></span>${busy?'In bedrijf':on?`${on} verbonden`:'Nog niet aangesloten'}</div></button>`; }).join('')}</div>`;
+  }
+  // stap 3: machine kiezen
+  const lines=childrenOf(SEL.hal).filter(l=>visibleLines().includes(l));
+  return `<h1>${esc(loc(SEL.hal).name)}</h1><p class="sub">Kies een machine.</p>${crumbs()}
+  <div class="tiles">${lines.map(l=>{ const st=lineState(l); const J=lineJobs(l.id);
+    const waiting=J.filter(j=>j.status==='Ontvangen'||j.status==='Verstuurd').length; const act=J.find(j=>j.status==='Actief');
+    return `<button class="tile machine" data-line="${l.id}"><div class="t-ic" aria-hidden="true">⚙</div><div class="t-name">${esc(l.name)}</div>
+      <div class="t-sub">${esc(l.type)}</div>
+      <div class="t-status"><span class="dot ${st.dot}"></span>${st.text}</div>
+      ${l.status==='online'?`<div class="t-sub">${act?`Actief: ${esc(act.order)}`:`${waiting} klaar op de machine`}</div>`:''}</button>`; }).join('')}</div>`;
+}
+
 function vDashboard(){
-  const J=DB.jobs; const cnt=s=>J.filter(j=>j.status===s).length;
-  const lines = LOCATIONS.filter(l=>l.level==='Lijn / entiteit');
-  const recent = [...J].sort((a,b)=>b.created-a.created).slice(0,5);
-  return `<h1>Dashboard</h1><p class="sub">Overzicht binnen uw scope: ${esc(ROLES[ROLE].scopeName)}</p>
+  const l=loc(SEL.line); const st=lineState(l);
+  const J=lineJobs(l.id); const cnt=x=>J.filter(j=>j.status===x).length;
+  const recent=[...J].sort((a,b)=>b.created-a.created).slice(0,5);
+  const head=`<h1>${esc(l.name)}</h1><p class="sub">${esc(loc(SEL.site).name)}, ${esc(loc(SEL.hal).name)} · ${esc(l.type)} · <span class="dot ${st.dot}"></span>${st.text}</p>${crumbs()}`;
+  if(l.status!=='online'){
+    return head+`<div class="locked">Deze machine is nog niet op het platform aangesloten.<br>Zodra het integratiepunt is ingericht, verschijnen hier de opdrachten en rapporten.</div>`;
+  }
+  const last=J.filter(j=>j.report).sort((a,b)=>b.report.end-a.report.end)[0];
+  return head+`
   <div class="grid g4">
     <div class="card kpi"><div class="v">${cnt('Ontvangen')+cnt('Verstuurd')}</div><div class="l">Klaar op de machine</div></div>
     <div class="card kpi"><div class="v">${cnt('Actief')}</div><div class="l">Actief</div></div>
@@ -297,16 +385,17 @@ function vDashboard(){
     <div class="card kpi"><div class="v">${cnt('Afgekeurd')}</div><div class="l">Afgekeurd</div></div>
   </div>
   <div class="grid g2">
-    <div class="card"><h2>Lijnen</h2><table><tr><th>Lijn</th><th>Locatie</th><th>Status</th></tr>
-      ${lines.map(l=>{const hal=LOCATIONS.find(x=>x.id===l.parent); const site=LOCATIONS.find(x=>x.id===hal.parent);
-        const st=l.status==='online'?(J.some(j=>j.status==='Actief')?'<span class="dot warn"></span>In bedrijf':'<span class="dot on"></span>Verbonden'):'<span class="dot off"></span>Nog niet aangesloten';
-        return `<tr><td><b>${esc(l.name)}</b></td><td>${esc(site.name)}, ${esc(hal.name)}</td><td>${st}</td></tr>`}).join('')}
+    <div class="card"><h2>Machine</h2><table>
+      <tr><td class="muted">Status</td><td><span class="dot ${st.dot}"></span>${st.text}</td></tr>
+      <tr><td class="muted">Integratiepunt</td><td><span class="dot on"></span>Siemens switch, verbonden</td></tr>
+      <tr><td class="muted">Laatste rapport</td><td>${last?`${esc(last.order)} · ${last.report.total.toLocaleString('nl-NL')} kg · ${fmt(last.report.end)}`:'Nog geen rapport'}</td></tr>
+      <tr><td class="muted">Looptijd laatste opdracht</td><td>${last?`${last.report.runtime} min (stilstand ${last.report.downtime} min)`:'—'}</td></tr>
     </table></div>
     <div class="card"><h2>Recente opdrachten</h2><table><tr><th>Order</th><th>Klant</th><th>Status</th></tr>
-      ${recent.map(j=>`<tr class="click" data-job="${j.id}"><td class="mono">${esc(j.order)}</td><td>${esc(j.customer)}</td><td>${badge(j.status)}</td></tr>`).join('')}
+      ${recent.map(j=>`<tr class="click" data-job="${j.id}"><td class="mono">${esc(j.order)}</td><td>${esc(j.customer)}</td><td>${badge(j.status)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Nog geen opdrachten.</td></tr>'}
     </table></div>
   </div>
-  ${can('order')?`<button class="btn" data-go="new">＋ Nieuwe opdracht</button>`:''}`;
+  ${can('order')?`<button class="btn" data-go="new">＋ Nieuwe opdracht voor deze machine</button>`:''}`;
 }
 
 function vNew(){
@@ -360,7 +449,13 @@ function csvFor(j){
 }
 
 const bind = {
-  dashboard(){ bindJobRows(); document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); },
+  dashboard(){ bindJobRows(); bindCrumbs(); document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); },
+  site(){
+    bindCrumbs();
+    document.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>{ SEL={site:b.dataset.site,hal:null,line:null}; go('site'); });
+    document.querySelectorAll('[data-hal]').forEach(b=>b.onclick=()=>{ SEL.hal=b.dataset.hal; SEL.line=null; go('site'); });
+    document.querySelectorAll('[data-line]').forEach(b=>b.onclick=()=>{ SEL.line=b.dataset.line; go('dashboard'); });
+  },
   new(){
     const $=id=>document.getElementById(id);
     const editable=['fRecipe','fSilo','fWeight','fTol','fRemark'];
@@ -648,8 +743,8 @@ function hmiFinish(complete){
 const roleSel=document.getElementById('roleSel');
 roleSel.innerHTML=Object.entries(ROLES).map(([k,r])=>`<option value="${k}">${r.label}</option>`).join('');
 roleSel.value=ROLE;
-roleSel.onchange=()=>{ ROLE=roleSel.value; EDITREC=null; VIEW = ROLE==='machine'?'hmi':'dashboard'; render(); toast(`U bekijkt het platform nu als ${ROLES[ROLE].label}.`); };
-document.getElementById('resetBtn').onclick=()=>{ clearInterval(HMI_TIMER); HMI_RUN=null; HMI_SEL=null; seed(); go(ROLE==='machine'?'hmi':'dashboard'); toast('Demo-gegevens teruggezet.'); };
+roleSel.onchange=()=>{ ROLE=roleSel.value; EDITREC=null; SEL={site:null,hal:null,line:null}; VIEW = ROLE==='machine'?'hmi':'site'; render(); toast(`U bekijkt het platform nu als ${ROLES[ROLE].label}.`); };
+document.getElementById('resetBtn').onclick=()=>{ clearInterval(HMI_TIMER); HMI_RUN=null; HMI_SEL=null; seed(); SEL={site:null,hal:null,line:null}; go(ROLE==='machine'?'hmi':'site'); toast('Demo-gegevens teruggezet.'); };
 seed(); render();
 </script>
 </body>
